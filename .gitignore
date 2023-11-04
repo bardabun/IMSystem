@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Environments
+.env
+.venv
+env/
+client_venv/
+coordiator_venv/
+inventory_venv/
+
+# IDEs
+.idea/
+.vscode/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Database
+*.sqlite
+
+# Logs
+*.log
+
+# Distribution / packaging
+dist/
+build/
+
+# User-generated
+user_uploads/
