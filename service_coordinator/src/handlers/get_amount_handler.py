@@ -22,10 +22,12 @@ def get_item_amount(item_id: str, query_inventory: Callable = Depends(get_reques
         "item_id": item_id,
         "attr": "amount"
     })
-
-    if response['status'] == 'success':
+    logger.info(f"Response: {response}")
+    if response is None:
+        return {"error": "No response from query_inventory"}
+    elif response['status'] == 'success':
         item_amount = response['data']
-        return {"item_id": item_id, "amount_left": item_amount}
+        return {"item_id": item_id, "amount": item_amount}
     else:
         logger.warning(f"Item not found: {item_id}")
         raise HTTPException(status_code=404, detail="Item not found")
