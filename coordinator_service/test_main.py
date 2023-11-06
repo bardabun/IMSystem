@@ -104,6 +104,6 @@ def test_record_sale_process():
 
 # Main execution
 if __name__ == "__main__":
-    # test_set_and_get_item_attribute()
-    # test_create_and_delete_item()
+    test_set_and_get_item_attribute()
+    test_create_and_delete_item()
     test_record_sale_process()
