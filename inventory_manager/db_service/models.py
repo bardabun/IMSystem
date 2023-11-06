@@ -1,5 +1,6 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float
+from sqlalchemy import DateTime, ForeignKey, create_engine, Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -12,3 +13,13 @@ class Item(Base):
     amount = Column(Integer)
     price = Column(Float)
     category = Column(String, index=True)
+
+
+class Sale(Base):
+    __tablename__ = 'sales'
+
+    id = Column(Integer, primary_key=True, index=True)
+    item_id = Column(String, ForeignKey('items.id'))
+    quantity = Column(Integer)
+    sale_price = Column(Float)
+    timestamp = Column(DateTime, default=datetime.utcnow)

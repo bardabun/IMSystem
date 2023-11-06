@@ -1,7 +1,9 @@
 import logging
 from db_service import db_operations
 from typing import Dict, Any
-from db_service.models import Item
+from db_service.models import Item, Sale
+from sqlalchemy.orm import Session
+from db_service.db_connection import SessionLocal
 
 logger = logging.getLogger(__name__)
 
@@ -10,10 +12,43 @@ class RequestHandler:
 
     def __init__(self, db_operations):
         self.db_operations = db_operations
+    #
+    # Sale handlers
+    #
+
+    def handle_sale(self, request):
+        item_id = request.get('item_id')
+        quantity = request.get('quantity')
+        sale_price = request.get('sale_price')
+
+        with SessionLocal() as session:
+            # Check inventory first before recording the sale
+            item = self.db_operations.get_item(item_id)
+            if item and item.amount >= quantity:
+                item.amount -= quantity
+                session.add(item)
+                sale = self.db_operations.record_sale(
+                    session, item_id, quantity, sale_price)
+
+                # Attempt to commit the transaction
+                try:
+                    session.commit()  # This will commit both the sale and the item update
+                    return {'status': 'success', 'sale_id': sale.id}
+                except Exception as e:
+                    session.rollback()  # Rollback the transaction if any error occurs
+                    logger.error(f"Transaction failed: {e}")
+                    return {'status': 'error', 'message': 'Transaction failed'}
+            else:
+                return {'status': 'error', 'message': 'Not enough inventory'}
 
     def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
         print(f"Handling request: {request}")
         action = request.get("action")
+        if action == "sale":
+            return self.handle_sale(request)
+        #
+        # Item handlers
+        #
         item_id = request.get("item_id")
         attr = request.get("attr")
         value = request.get("value")

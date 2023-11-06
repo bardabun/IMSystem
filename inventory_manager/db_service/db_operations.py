@@ -1,6 +1,6 @@
 import logging
 from sqlalchemy.orm import Session
-from .models import Item
+from .models import Item, Sale
 from .db_connection import SessionLocal
 from typing import Tuple
 
@@ -9,6 +9,9 @@ logger = logging.getLogger(__name__)
 
 class DatabaseOperations:
 
+    #
+    # Item Operations
+    #
     @staticmethod
     def get_item(item_id: str) -> Item:
         session = SessionLocal()
@@ -67,3 +70,17 @@ class DatabaseOperations:
         else:
             session.close()
             return False
+
+    #
+    # Sales Operations
+    #
+    @staticmethod
+    def record_sale(session, item_id, quantity, sale_price):
+        sale = Sale(item_id=item_id, quantity=quantity, sale_price=sale_price)
+        session.add(sale)
+        # Do not commit here; let the calling function handle the transaction
+        return sale
+
+    def get_sales(start_date, end_date):
+        with SessionLocal() as session:
+            return session.query(Sale).filter(Sale.timestamp >= start_date, Sale.timestamp <= end_date).all()
