@@ -8,56 +8,102 @@ setup_app()
 # Create a Test Client
 client = TestClient(app)
 
+# Utility function to get current item amount
 
-def send_requests():
-    for i in range(100):  # Adjust this number
-        print(f"Sending request number {i}")
-        response = client.get("/item_amount/item_1")
-        assert response.status_code == 200
 
-        # ... any other requests you want to include in your test ...
+def get_item_amount(item_id):
+    response = client.get(f"/item_amount/{item_id}")
+    assert response.status_code == 200
+    return response.json()["amount"]
+
+# Utility function to set item amount
+
+
+def set_item_amount(item_id, new_amount):
+    response = client.post(
+        f"/set_item_attribute/{item_id}/amount/{new_amount}")
+    assert response.status_code == 200
+    assert response.json() == {"status": "success"}
+
+# Utility function to create an item
+
+
+def create_item(item_id, name, amount, price, category):
+    response = client.post(
+        f"/create_item/{item_id}/{name}/{amount}/{price}/{category}")
+    assert response.status_code == 200
+    assert response.json() == {"status": "success"}
+
+# Utility function to delete an item
+
+
+def delete_item(item_id):
+    response = client.delete(f"/delete_item/{item_id}")
+    assert response.status_code == 200
+    assert response.json() == {"status": "success"}
+
+# Utility function to record a sale
+
+
+def record_sale(item_id, quantity, sale_price):
+    post_url = f"/record_sale/{item_id}/{quantity}/{sale_price}"
+    response = client.post(post_url)
+    print(f"Request URL: {post_url}")  # Debugging: print the request URL
+    # Debugging: print the response status code
+    print(f"Response status code: {response.status_code}")
+
+    assert response.status_code == 200
+    response_data = response.json()
+    assert 'status' in response_data and response_data['status'] == 'success'
+    return response_data.get('sale_id')
+
+# Tests
+
+
+def test_set_and_get_item_attribute():
+    item_id = "item_1"
+    current_amount = get_item_amount(item_id)
+    new_amount = current_amount + 100
+    set_item_amount(item_id, new_amount)
+    assert get_item_amount(item_id) == new_amount
+
+
+def test_create_and_delete_item():
+    item_id = "item_2"
+    name = "TestItem"
+    amount = 50
+    price = 19.99
+    category = "TestCategory"
+    create_item(item_id, name, amount, price, category)
+    delete_item(item_id)
+    response = client.get(f"/item_amount/{item_id}")
+    # Assuming 404 is returned when an item doesn't exist
+    assert response.status_code == 404
 
 
 @pytest.mark.benchmark(min_rounds=1)
 def test_concurrent_performance(benchmark):
-    # Use pytest-benchmark to measure the performance
-    benchmark(send_requests)
+    benchmark(lambda: get_item_amount("item_1"))
 
 
-# # Test set and get
-# def test_set_item_attribute():
-#     # First, get the current amount
-#     response = client.get("/item_amount/item_1")
-#     print(f"Yo Here Is The Response -> {response}")
-#     assert response.status_code == 200
-#     current_amount = response.json()["amount"]
+def test_record_sale_process():
+    item_id = "item_1"
+    # Ensure item exists before proceeding
+    if get_item_amount(item_id) == 404:
+        create_item(item_id, "NewItem", 100, 10.00, "NewCategory")
 
-#     # Now, update the amount
-#     new_amount = current_amount + 100 if current_amount is not None else 100
-#     response = client.post(f"/set_item_attribute/item_1/amount/{new_amount}")
-#     assert response.status_code == 200
-#     assert response.json() == {"status": "success"}
+    initial_amount = get_item_amount(item_id)
+    quantity = 10
+    sale_price = 16.1
+    expected_new_amount = initial_amount - quantity
 
-#     # Verify the updated amount
-#     response = client.get("/item_amount/item_1")
-#     assert response.status_code == 200
-#     assert response.json() == {"item_id": "item_1", "amount": new_amount}
+    sale_id = record_sale(item_id, quantity, sale_price)
+    assert sale_id is not None
+    assert get_item_amount(item_id) == expected_new_amount
 
 
-# def test_create_item():
-#     response = client.post(
-#         "/create_item/item_2/TestItem/50/19.99/TestCategory")
-#     assert response.status_code == 200
-#     assert response.json() == {"status": "success"}
-
-
-# def test_delete_item():
-#     # Assuming item_2 was created in a previous test or exists in the database
-#     response = client.delete("/delete_item/item_2")
-#     assert response.status_code == 200
-#     assert response.json() == {"status": "success"}
-
-#     # Optional: check that the item was actually deleted
-#     response = client.get("/item_amount/item_2")
-#     # Assuming 404 is returned when an item doesn't exist
-#     assert response.status_code == 404
+# Main execution
+if __name__ == "__main__":
+    # test_set_and_get_item_attribute()
+    # test_create_and_delete_item()
+    test_record_sale_process()

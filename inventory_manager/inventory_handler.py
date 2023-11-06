@@ -20,7 +20,8 @@ class RequestHandler:
         item_id = request.get('item_id')
         quantity = request.get('quantity')
         sale_price = request.get('sale_price')
-
+        print(
+            f"--> item_id: {item_id}, quantity: {quantity}, sale_price: {sale_price}")
         with SessionLocal() as session:
             # Check inventory first before recording the sale
             item = self.db_operations.get_item(item_id)
