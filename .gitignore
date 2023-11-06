@@ -8,6 +8,7 @@ __pycache__/
 env/
 client_venv/
 coordiator_venv/
+coordinator_service/coordinator_venv/
 inventory_venv/
 
 # IDEs
