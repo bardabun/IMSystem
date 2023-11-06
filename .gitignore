@@ -30,3 +30,6 @@ build/
 
 # User-generated
 user_uploads/
+
+# Authentication
+db_config.py
